@@ -1,12 +1,3 @@
-"""
-==============================================================================
- TCC Detection — Streamlit Web App
- Bharatiya Antariksh Hackathon 2025 | ISRO INSAT-3D
-==============================================================================
-DEPLOY:
-  pip install streamlit h5py numpy scipy scikit-image torch torchvision matplotlib
-  streamlit run app.py
-"""
 
 import streamlit as st
 import h5py, io, tempfile, os
@@ -17,7 +8,6 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from scipy import ndimage
 from pathlib import Path
 
-# ─── Page config ───────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="TCC Detector | INSAT-3D",
     page_icon="🛰️",
@@ -25,14 +15,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─── Constants ─────────────────────────────────────────────────────────────
 THRESHOLDS = {
     'North Indian Ocean': {'lat_range':(0,30),  'lon_range':(30,100),'tb_thresh':218.0},
     'South Indian Ocean': {'lat_range':(-30,0), 'lon_range':(30,110),'tb_thresh':221.0},
 }
 TCC = {'min_radius_km':111.,'min_area_km2':34800.,'independence_km':1200.,'pixel_res_km':4.}
 
-# ─── INSAT-3D Loader ───────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def load_insat(filepath):
     with h5py.File(filepath,'r') as f:
@@ -55,7 +43,6 @@ def load_insat(filepath):
         }
     return tb, lat2d, lon2d, meta
 
-# ─── Traditional Detector ──────────────────────────────────────────────────
 def haversine(lat1,lon1,lat2,lon2):
     R=6371.; p1,p2=np.radians(lat1),np.radians(lat2)
     dp=np.radians(lat2-lat1); dl=np.radians(lon2-lon1)
@@ -93,7 +80,7 @@ def detect_tccs(tb,lat,lon,thresholds):
         ))
     return tccs
 
-# ─── U-Net Model ───────────────────────────────────────────────────────────
+#  U-Net Model 
 class DoubleConv(nn.Module):
     def __init__(self,ic,oc,mc=None):
         super().__init__(); mc=mc or oc
@@ -153,7 +140,6 @@ def cnn_predict(model,tbn,thresh,P=256,S=128):
                 prob[i:i2,j:j2]+=out[:pi,:pj]; cnt[i:i2,j:j2]+=1.
     cnt[cnt==0]=1; return prob/cnt
 
-# ─── Visualisation helpers ─────────────────────────────────────────────────
 def fig_tb(tb, tccs, meta):
     fig,ax=plt.subplots(figsize=(10,8))
     ax.imshow(tb, cmap='RdYlBu', vmin=190, vmax=310,
@@ -181,7 +167,7 @@ def fig_cnn(prob, cnn_mask):
     ax.axis('off'); plt.tight_layout()
     return fig
 
-# ─── UI ────────────────────────────────────────────────────────────────────
+# UI 
 st.markdown("""
 <style>
 .big-title{font-size:2.8rem;font-weight:800;color:#1a73e8;margin-bottom:0}
@@ -238,7 +224,7 @@ TCC['min_radius_km']  = float(min_radius)
 # Main panel
 
     #st.markdown("""
-    ### 📖 Algorithm Overview
+    ### Algorithm Overview
     #| Step | Method | Purpose |
     #|------|--------|---------|
     #| 1 | LUT calibration | DN → Brightness Temperature (K) |
@@ -327,7 +313,7 @@ if uploaded and run_btn:
             df = pd.DataFrame(rows)
             st.dataframe(df, use_container_width=True)
 
-            # Per-TCC cards
+            # Per-TCC 
             for t in tccs:
                 with st.expander(f"🌀 TCC #{t['id']} — ({t['clat']:.2f}°, {t['clon']:.2f}°)"):
                     cc=st.columns(4)
